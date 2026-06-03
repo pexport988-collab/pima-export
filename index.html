@@ -798,10 +798,10 @@ ${rawText.slice(0, 10000)}`;
     }
 
    // Clean and parse JSON response
-    let clean = text.replace(/```json|```/g, '').trim();
-    clean = clean.replace(/\r|\n|\t/g, ' ');
+    let clean = text.replace(/`/g, '').replace(/json/g, '').trim();
+    clean = clean.split('\r').join(' ').split('\n').join(' ').split('\t').join(' ');
     clean = clean.replace(/,[ ]*}/g, '}').replace(/,[ ]*]/g, ']');
-    const m = clean.indexOf('{'), m2 = clean.lastIndexOf('}');
+    var m = clean.indexOf('{'), m2 = clean.lastIndexOf('}');
     if (m >= 0 && m2 > m) clean = clean.slice(m, m2+1);
     parsed = JSON.parse(clean);
     stepDone('step2');
