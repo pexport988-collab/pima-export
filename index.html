@@ -772,7 +772,23 @@ ${rawText.slice(0, 12000)}`;
     });
 
     const data = await res.json();
-    const text = data.content?.map(b => b.text||'').join('');
+
+    // Debug: log what the proxy returned
+    console.log('Proxy response:', JSON.stringify(data).slice(0, 300));
+
+    // Handle error responses from proxy or Anthropic
+    if (!res.ok || data.error) {
+      throw new Error(data.error?.message || data.error || 'Proxy error ' + res.status);
+    }
+
+    // Extract text from response
+    const blocks = data.content || [];
+    const text = blocks.map(b => b.text || '').join('');
+
+    if (!text) {
+      throw new Error('Respuesta vacía del modelo');
+    }
+
     const clean = text.replace(/```json|```/g,'').trim();
     parsed = JSON.parse(clean);
     stepDone('step2');
