@@ -798,11 +798,18 @@ ${rawText.slice(0, 10000)}`;
     }
 
    // Clean and parse JSON response
-    let clean = text.replace(/`/g, '').replace(/json/g, '').trim();
-    clean = clean.split('\r').join(' ').split('\n').join(' ').split('\t').join(' ');
+    let clean = text;
+    // Remove markdown fences
+    clean = clean.replace(/```json/g, '').replace(/```/g, '');
+    // Replace literal \n \r \t sequences (escaped and real)
+    clean = clean.split('\\n').join(' ').split('\\r').join(' ').split('\\t').join(' ');
+    clean = clean.split('\n').join(' ').split('\r').join(' ').split('\t').join(' ');
+    // Remove trailing commas
     clean = clean.replace(/,[ ]*}/g, '}').replace(/,[ ]*]/g, ']');
+    // Extract JSON object
     var m = clean.indexOf('{'), m2 = clean.lastIndexOf('}');
     if (m >= 0 && m2 > m) clean = clean.slice(m, m2+1);
+    clean = clean.trim();
     parsed = JSON.parse(clean);
     stepDone('step2');
   } catch(e) {
