@@ -827,11 +827,19 @@ ${rawText.slice(0, 10000)}`;
 
     // Build the HTML page for this order
     const pageHTML = generateOrderPage(parsed, slug);
+    const filename = slug + '.html';
 
-    // Save page HTML in localStorage (opened via data URL or blob)
-    localStorage.setItem(`order_page_${slug}`, pageHTML);
+    // Auto-download the HTML file
+    const blob = new Blob([pageHTML], { type: 'text/html' });
+    const dlUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = dlUrl;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(dlUrl);
 
-    // Save order metadata
+    // Save order metadata (file points to same-folder HTML)
+    localStorage.setItem('order_page_' + slug, pageHTML);
     const orders = loadOrders();
     const exists = orders.findIndex(o => o.slug === slug);
     const meta = {
@@ -839,15 +847,13 @@ ${rawText.slice(0, 10000)}`;
       slug,
       totalPares: parsed.totalPares,
       fecha: parsed.fecha,
-      file: `#order_${slug}`,
+      file: filename,
       totalMateriales: totalMats,
-      zeroCount,
-      pageHTML
+      zeroCount
     };
     if (exists >= 0) orders[exists] = meta;
     else orders.push(meta);
     saveOrders(orders);
-    // Push to cloud (without pageHTML to keep payload small)
     const { pageHTML: _ph, ...metaCloud } = meta;
     cloudPost({ action: 'add_order', slug, value: metaCloud });
     if (_cloudCache) { if (!_cloudCache['_orders']) _cloudCache['_orders'] = []; _cloudCache['_orders'] = _cloudCache['_orders'].filter(o=>o.slug!==slug); _cloudCache['_orders'].push(metaCloud); }
@@ -860,13 +866,14 @@ ${rawText.slice(0, 10000)}`;
   }
 
   // ── STEP 4: Done ─────────────────────────────────────────────────────────
-  stepDone('step4', true);
+  const step4el = document.getElementById('step4');
+  step4el.classList.add('done');
+  step4el.querySelector('.step-icon').textContent = '✅';
+  step4el.innerHTML += '<div style="margin-top:8px;font-size:11px;font-family:DM Mono,monospace;color:#e8c97a;line-height:1.6">Archivo descargado. Súbelo a GitHub (Add file → Upload) para verlo en el catálogo.</div>';
+
   renderCatalog();
-
-  // Update grid click handlers for dynamic orders
   bindDynamicCards();
-
-  setTimeout(closeModal, 1800);
+  setTimeout(closeModal, 5000);
 }
 
 // ── GENERATE ORDER PAGE ───────────────────────────────────────────────────────
