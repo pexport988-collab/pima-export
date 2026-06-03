@@ -733,33 +733,28 @@ async function processFile() {
   stepActive('step2');
   let parsed = null;
   try {
-    const prompt = `Eres un asistente de manufactura de calzado. 
-Analiza este reporte de "EXPLOSIÓN DE MATERIALES DE CORTE" del sistema PIMA Export y extrae la información en JSON.
+    const prompt = `Eres un asistente de manufactura de calzado.
+Analiza este reporte de EXPLOSION DE MATERIALES DE CORTE del sistema PIMA Export.
 
-REGLAS:
-- Extrae el número de pedido del encabezado (busca "p." seguido de número, o el nombre del archivo)
-- Extrae el total de pares
-- Extrae TODOS los materiales agrupados por familia (APLICACIONES, AVIOS/AVÍOS, CORTES, GASTOS, MONTADO)
-- Para cada material: nombre, pares, consumo por par (cons), consumo total, unidad
-- Si el consumo total es 0 o "0", marca alerta: "zero"
-- Los hilos con consumo 0 siempre son "zero"
+INSTRUCCIONES CRITICAS:
+1. Responde UNICAMENTE con JSON valido y nada mas
+2. NO uses caracteres especiales como acentos, enies o simbolos en los valores de texto
+3. NO incluyas saltos de linea dentro de strings JSON
+4. Usa comillas dobles para todo
+5. Todos los numeros sin formato (sin comas): 1508 no 1,508
 
-RESPONDE SOLO con JSON válido, sin markdown, sin explicaciones:
-{
-  "numeroPedido": "p. XXXX",
-  "totalPares": 0,
-  "fecha": "DD-Mon-YY",
-  "familias": {
-    "aplicaciones": [{"id":"a1","nombre":"...","pares":0,"cons":"0.000","total":"0","unidad":"MTS","alerta":null}],
-    "avios": [],
-    "cortes": [],
-    "gastos": [],
-    "montado": []
-  }
-}
+Extrae:
+- numeroPedido: numero del pedido (ej "p. 1795")
+- totalPares: numero entero
+- fecha: fecha en formato DD-Mon-YY
+- familias: objeto con aplicaciones, avios, cortes, gastos, montado
+- Cada material: id unico, nombre, pares (entero), cons (string decimal), total (string), unidad (string), alerta (null o "zero" si consumo es 0)
 
-DATOS DEL REPORTE:
-${rawText.slice(0, 12000)}`;
+FORMATO EXACTO DE RESPUESTA:
+{"numeroPedido":"p. XXXX","totalPares":0,"fecha":"DD-Mon-YY","familias":{"aplicaciones":[{"id":"a1","nombre":"nombre material","pares":0,"cons":"0.000","total":"0","unidad":"MTS","alerta":null}],"avios":[],"cortes":[],"gastos":[],"montado":[]}}
+
+DATOS:
+${rawText.slice(0, 10000)}`;
 
     const res = await fetch('https://pima-proxy.pexport988.workers.dev', {
       method: 'POST',
