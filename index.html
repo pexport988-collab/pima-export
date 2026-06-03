@@ -544,9 +544,10 @@ const BUILTIN = [
 
 function allOrders() {
   const dynamic = loadOrders();
-  // merge: built-in first, then dynamic (avoid duplicates by slug)
+  const hidden = JSON.parse(localStorage.getItem('pima_hidden') || '[]');
   const slugs = new Set(BUILTIN.map(o => o.slug));
-  return [...BUILTIN, ...dynamic.filter(o => !slugs.has(o.slug))];
+  const visibleBuiltin = BUILTIN.filter(o => !hidden.includes(o.slug));
+  return [...visibleBuiltin, ...dynamic.filter(o => !slugs.has(o.slug))];
 }
 
 // ── RENDER CATALOG ────────────────────────────────────────────────────────────
@@ -579,7 +580,7 @@ function renderCatalog() {
     card.className = 'order-card';
     card.style.animationDelay = `${i * 0.06}s`;
     card.innerHTML = `
-      ${!isBuiltin ? `<button class="card-delete" title="Eliminar pedido" onclick="deleteOrder(event,'${order.slug}')">✕</button>` : ''}
+      <button class="card-delete" title="Eliminar pedido" onclick="deleteOrder(event,'${order.slug}')">✕</button>
       <div class="card-label">Pedido</div>
       <div class="card-number">${order.id}</div>
       <div class="card-meta">
@@ -614,13 +615,25 @@ function deleteOrder(e, slug) {
   e.preventDefault();
   e.stopPropagation();
   if (!confirm('¿Eliminar este pedido del catálogo?')) return;
+
+  // Track hidden builtin orders in a separate list
+  const isBuiltin = BUILTIN.some(b => b.slug === slug);
+  if (isBuiltin) {
+    const hidden = JSON.parse(localStorage.getItem('pima_hidden') || '[]');
+    if (!hidden.includes(slug)) hidden.push(slug);
+    localStorage.setItem('pima_hidden', JSON.stringify(hidden));
+  }
+
   const list = loadOrders().filter(o => o.slug !== slug);
   saveOrders(list);
   localStorage.removeItem('checklist_' + slug);
   localStorage.removeItem('order_page_' + slug);
   localStorage.removeItem('partials_' + slug);
   cloudPost({ action: 'delete_order', slug });
-  if (_cloudCache) { if (_cloudCache['_orders']) _cloudCache['_orders'] = _cloudCache['_orders'].filter(o=>o.slug!==slug); delete _cloudCache[slug]; }
+  if (_cloudCache) {
+    if (_cloudCache['_orders']) _cloudCache['_orders'] = _cloudCache['_orders'].filter(o=>o.slug!==slug);
+    delete _cloudCache[slug];
+  }
   renderCatalog();
 }
 
