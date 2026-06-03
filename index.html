@@ -1091,11 +1091,14 @@ function bindDynamicCards() {
       card.addEventListener('click', e => {
         e.preventDefault();
         const slug = href.replace('#order_','');
-        const html = localStorage.getItem(`order_page_${slug}`);
+        const html = localStorage.getItem('order_page_' + slug);
         if (!html) return;
-        const blob = new Blob([html], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
+        // Inject a back-button that returns to the catalog
+        const backBtn = '<a onclick="history.back()" style="display:flex;align-items:center;gap:8px;font-family:DM Mono,monospace;font-size:11px;letter-spacing:.15em;color:#7a7a8a;text-decoration:none;text-transform:uppercase;cursor:pointer;" onmouseover="this.style.color=\'#e8c97a\'" onmouseout="this.style.color=\'#7a7a8a\'"><svg width=\"14\" height=\"14\" viewBox=\"0 0 14 14\" fill=\"none\"><path d=\"M9 2L4 7l5 5\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg>Catálogo</a>';
+        const patched = html.replace('<a class="back-btn" onclick="history.back()">', '<a class="back-btn" onclick="history.back()">');
+        document.open();
+        document.write(patched);
+        document.close();
       });
     }
   });
