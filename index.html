@@ -784,7 +784,16 @@ ${rawText.slice(0, 10000)}`;
       throw new Error('Respuesta vacía del modelo');
     }
 
-    const clean = text.replace(/```json|```/g,'').trim();
+    // Clean the response: remove markdown, newlines inside strings, control chars
+    let clean = text.replace(/```json|```/g,'').trim();
+    // Remove newlines and tabs that break JSON parsing
+    clean = clean.replace(/[
+	]/g, ' ');
+    // Fix common issues: trailing commas before } or ]
+    clean = clean.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+    // Extract just the JSON object if there's extra text
+    const jsonMatch = clean.match(/\{[\s\S]*\}/);
+    if (jsonMatch) clean = jsonMatch[0];
     parsed = JSON.parse(clean);
     stepDone('step2');
   } catch(e) {
